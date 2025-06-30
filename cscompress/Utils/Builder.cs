@@ -31,7 +31,7 @@ namespace FloatingPointCompressor.Utils
         /// <summary>
         /// Decompresses a byte array to a float array using the original length and precision.
         /// </summary>
-        public static float[] DecompressWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<float>? strategy = null)
+        public static float[] DecompressFloatWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<float>? strategy = null)
         {
             var compressor = new CSCompress<float>(new float[originalLength], precision, strategy ?? new IntegerQuantization<float>());
             return compressor.Decompress(compressed);
@@ -40,7 +40,7 @@ namespace FloatingPointCompressor.Utils
         /// <summary>
         /// Decompresses a byte array to a double array using the original length and precision.
         /// </summary>
-        public static double[] DecompressWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<double>? strategy = null)
+        public static double[] DecompressDoubleWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<double>? strategy = null)
         {
             var compressor = new CSCompress<double>(new double[originalLength], precision, strategy ?? new IntegerQuantization<double>());
             return compressor.Decompress(compressed);
@@ -69,17 +69,9 @@ namespace FloatingPointCompressor.Utils
         }
 
         /// <summary>
-        /// Writes a compressed byte array to a file as a base64 string for readability.
-        /// </summary>
-        public static void WriteCompressedToFile(byte[] data, string path)
-        {
-            File.WriteAllText(path, Convert.ToBase64String(data));
-        }
-
-        /// <summary>
         /// Extension method to write a byte array to a file as a base64 string.
         /// </summary>
-        public static void ToFile(this byte[] data, string path)
+        public static void SaveToFile(this byte[] data, string path)
         {
             File.WriteAllText(path, Convert.ToBase64String(data));
         }

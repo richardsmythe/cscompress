@@ -17,6 +17,7 @@ This is a utility for compressing and decompressing arrays of floating-point num
 ## Quick Start
 
 ### Standard Usageusing FloatingPointCompressor;
+<pre>
 using FloatingPointCompressor.Models;
 
 float[] values = { 1.23f, 4.56f, 7.89f };
@@ -30,20 +31,18 @@ byte[] compressed = compressor.Compress();
 
 // Decompress
 float[] decompressed = compressor.Decompress(compressed);
+</pre>
 
 ### Fluent API & Builder Extensions
-You can use extension methods for a more fluent and concise API:
-using FloatingPointCompressor.Utils;
-
-float[] values = { 1.23f, 4.56f, 7.89f };
-Precision precision = Precision.TenThousandths;
-
-// Compress with extension method
-byte[] compressed = values.CompressWithPrecision(precision);
-
-// Decompress with extension method
-float[] decompressed = Builder.DecompressWithPrecision(compressed, values.Length, precision);
-You can also specify a custom quantization strategy as an optional argument.
+You can use the provided extension methods for a fluent and concise workflow:
+<pre>
+•	CompressWithPrecision(this float[] values, Precision precision, IQuantizationStrategy<float>? strategy = null)
+•	CompressWithPrecision(this double[] values, Precision precision, IQuantizationStrategy<double>? strategy = null)
+•	DecompressFloatWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<float>? strategy = null)
+•	DecompressDoubleWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<double>? strategy = null)
+•	ReadFloatArrayFromFile(string path)
+•	ReadDoubleArrayFromFile(string path)
+•	SaveToFile(this byte[] data, string path) </pre>
 
 ## Precision Levels
 
@@ -82,4 +81,30 @@ The benchmark involved compressing and decompressing an array of **1,000,000** f
 Please feel free to contribute! Open issues or submit pull requests for improvements and new features.
 
 
+## Example
+<pre>
+using System.IO;
+using FloatingPointCompressor.Models;
+using FloatingPointCompressor.Utils;
 
+// Use some existing data:
+double[] values = { 1.23647, 4.5666, -47.823449 };
+
+// Specify your precision:
+Precision precision = Precision.Thousandths;
+
+// Compress the double array using the Builder extension:
+byte[] compressed = values.CompressWithPrecision(precision);
+
+// Save the compressed data to a file
+values.CompressWithPrecision(precision).SaveToFile("compressed_doubles.txt");
+
+// Print to console the compressed base64 data:
+Console.WriteLine("Compressed (Base64):");
+Console.WriteLine(Convert.ToBase64String(compressed));
+
+// Decompress to see the results:
+var decompressed = compressed.DecompressDoubleWithPrecision(values.Length, precision);
+Console.WriteLine("\nOriginal values:    " + string.Join(", ", values.Select(v => v.ToString("G17"))));
+Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
+</pre>
