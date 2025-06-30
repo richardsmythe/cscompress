@@ -75,7 +75,7 @@ The benchmark involved compressing and decompressing an array of **1,000,000** f
 
 ## TODOs
 
-- Add more compressor types for lossless compression.
+- Add more compressor types for lossless compression, the aim is to create a suite of compressors.
 
 ## Contribution
 
