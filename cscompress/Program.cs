@@ -25,18 +25,35 @@ internal class Program
             299792.469
         };
 
-        double[] values = { 1.23, 4.56, 7.89 };
-        Precision precision = Precision.TenThousandths;
-        var compressed = values.CompressWithPrecision(precision);
+
+        Precision precision = Precision.Tenths;
+        var compressed = scientificDoubleValues.CompressWithPrecision(precision);
         compressed.SaveToFile("compressed_doubles.txt");
 
         // Print compressed data as Base64
+        Console.WriteLine($"Precision: {precision}");
         Console.WriteLine("Compressed (Base64):");
+
         Console.WriteLine(Convert.ToBase64String(compressed));
 
         // Decompress and print decompressed values
-        var decompressed = compressed.DecompressDoubleWithPrecision(values.Length, precision);
-        Console.WriteLine("\nOriginal values:    " + string.Join(", ", values.Select(v => v.ToString("G17"))));
+        var decompressed = compressed.DecompressDoubleWithPrecision(scientificDoubleValues.Length, precision);
+        Console.WriteLine("\nOriginal values:    " + string.Join(", ", scientificDoubleValues.Select(v => v.ToString("G17"))));
         Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
+
+        // Print error analysis
+        double tolerance = precision.Value;
+        bool allWithinTolerance = true;
+        Console.WriteLine("\nError analysis (tolerance: " + tolerance + "):");
+        for (int i = 0; i < scientificDoubleValues.Length; i++)
+        {
+            double original = scientificDoubleValues[i];
+            double recon = decompressed[i];
+            double error = Math.Abs(original - recon);
+            bool within = error <= tolerance + 1e-12;
+            if (!within) allWithinTolerance = false;
+            Console.WriteLine($"Index {i}: |orig - decomp| = {error:G17} {(within ? "(OK)" : "(EXCEEDS TOLERANCE!)")}");
+        }
+        Console.WriteLine(allWithinTolerance ? "\nAll values are within the specified tolerance." : "\nSome values exceed the specified tolerance!");
     }
 }
