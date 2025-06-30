@@ -26,7 +26,7 @@ internal class Program
         };
 
 
-        Precision precision = Precision.Tenths;
+        Precision precision = Precision.Thousandsth;
         var compressed = scientificDoubleValues.CompressWithPrecision(precision);
         compressed.SaveToFile("compressed_doubles.txt");
 
