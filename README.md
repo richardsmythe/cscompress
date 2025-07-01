@@ -1,6 +1,6 @@
 # CSCompress
 
-This is a utility for compressing and decompressing arrays of floating-point numbers for .NET. The main goal is to reduce the size of floating-point data arrays by applying compression based on a specified precision level. This is useful for optimizing storage and transmission of numerical data where full precision is not always required. Additionally, the compressor utilizes low-level optimizations using **SIMD (Single Instruction, Multiple Data)** for high-speed processing, making it suitable for performance-sensitive applications. Currently, the default compressor is QuantizedInteger, with plans to include more.
+This is a utility for .Net to allow compressing and decompressing arrays of floating-point numbers for .NET. The main goal is to reduce the size of floating-point data arrays by applying compression based on a specified precision level. This is useful for optimizing storage and transmission of numerical data where full precision is not always required. Additionally, the compressor utilizes low-level optimizations using **SIMD (Single Instruction, Multiple Data)** for high-speed processing, making it suitable for performance-sensitive applications.
 
 ## Features
 - **Compress floating-point arrays** into compact byte arrays.
@@ -20,7 +20,7 @@ This is a utility for compressing and decompressing arrays of floating-point num
 <pre>
 using FloatingPointCompressor.Models;
 
-float[] values = { 1.23f, 4.56f, 7.89f };
+float[] values = { 1.2354878f, -4.6659936f, 7.3111189f };
 Precision precision = Precision.TenThousandths;
 
 // Create compressor instance
@@ -74,7 +74,7 @@ The benchmark involved compressing and decompressing an array of **1,000,000** f
 
 ## TODOs
 
-- Add more compressor types for lossless compression, the aim is to create a suite of compressors.
+- Add more compressor types for lossless compression, the aim is to create a suite of compressors for specific needs.
 
 ## Contribution
 
@@ -82,29 +82,58 @@ Please feel free to contribute! Open issues or submit pull requests for improvem
 
 
 ## Example
+
+Create a console app and paste the code below.
+
 <pre>
-using System.IO;
 using FloatingPointCompressor.Models;
 using FloatingPointCompressor.Utils;
 
-// Use some existing data:
-double[] values = { 1.23647, 4.5666, -47.823449 };
+ private static async Task Main(string[] args)
+ {
+     double[] scientificDoubleValues = new double[] {
+         5.545000086,
+         -7.55112505,
+         123456.789,
+         -98765.4297,
+         3.1415925,
+         -2.71828175,
+         1.61803389,
+         -0.577215672,
+         299792.4695
+     };
 
-// Specify your precision:
-Precision precision = Precision.Thousandths;
+     Precision precision = Precision.Thousandsth;
+     var compressed = scientificDoubleValues.CompressWithPrecision(precision);
+     compressed.SaveToFile("compressed_doubles.txt");
 
-// Compress the double array using the Builder extension:
-byte[] compressed = values.CompressWithPrecision(precision);
+     // Print compressed data as Base64
+     Console.WriteLine($"Precision: {precision}");
+     Console.WriteLine("Compressed (Base64):");
 
-// Save the compressed data to a file
-values.CompressWithPrecision(precision).SaveToFile("compressed_doubles.txt");
+     Console.WriteLine(Convert.ToBase64String(compressed));
 
-// Print to console the compressed base64 data:
-Console.WriteLine("Compressed (Base64):");
-Console.WriteLine(Convert.ToBase64String(compressed));
+     // Decompress and print decompressed values
+     var decompressed = compressed.DecompressDoubleWithPrecision(scientificDoubleValues.Length, precision);
+     Console.WriteLine("\nOriginal values:    " + string.Join(", ", scientificDoubleValues.Select(v => v.ToString("G17"))));
+     Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
 
-// Decompress to see the results:
-var decompressed = compressed.DecompressDoubleWithPrecision(values.Length, precision);
-Console.WriteLine("\nOriginal values:    " + string.Join(", ", values.Select(v => v.ToString("G17"))));
-Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
+     // Print error analysis
+     double tolerance = precision.Value;
+     bool allWithinTolerance = true;
+     Console.WriteLine("\nError analysis (tolerance: " + tolerance + "):");
+     for (int i = 0; i < scientificDoubleValues.Length; i++)
+     {
+         double original = scientificDoubleValues[i];
+         double recon = decompressed[i];
+         double error = Math.Abs(original - recon);
+         bool within = error <= tolerance + 1e-12;
+         if (!within) allWithinTolerance = false;
+         Console.WriteLine($"Index {i}: = {error:G17} {(within ? "(OK)" : "(EXCEEDS TOLERANCE!)")}");
+     }
+     Console.WriteLine(allWithinTolerance ? "\nAll values are within the specified tolerance." : "\nSome values exceed the specified tolerance!");
+ }
 </pre>
+
+## Installation
+CsCompress is available via  <a href='https://www.nuget.org/packages/cscompress'>Nuget</a>
