@@ -20,7 +20,7 @@ This is a utility for compressing and decompressing arrays of floating-point num
 <pre>
 using FloatingPointCompressor.Models;
 
-float[] values = { 1.23f, 4.56f, 7.89f };
+float[] values = { 1.2354878f, -4.6659936f, 7.3111189f };
 Precision precision = Precision.TenThousandths;
 
 // Create compressor instance
@@ -88,7 +88,7 @@ using FloatingPointCompressor.Models;
 using FloatingPointCompressor.Utils;
 
 // Use some existing data:
-double[] values = { 1.23647, 4.5666, -47.823449 };
+double[] values = { 1.2354878f, -4.6659936f, 7.3111189f  };
 
 // Specify your precision:
 Precision precision = Precision.Thousandths;
