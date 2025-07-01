@@ -1,21 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<IsPackable>true</IsPackable>
+		<Title>CsCompress</Title>
+		<Version>1.0.1</Version>
+		<Authors>Richard Smythe</Authors>
+		<Description>CsCompress  is a .NET library for compressing and decompressing arrays of floating-point numbers (float and double) with various precision levels, efficient SIMD optimizations, and a fluent API for easy integration.</Description>
+		<PackageReadmeFile></PackageReadmeFile>
+		<PackageProjectUrl>https://github.com/richardsmythe/cscompress</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/richardsmythe/cscompress</RepositoryUrl>
+		<PackageTags>compression; floating-point; quantization; .NET; C#; double; float; data-reduction; precision; SIMD; serialization; performance; scientific-computing; data-storage; lossy-compression; nuget; library; high-performance; array-compression; numeric-data; machine-learning</PackageTags>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.12.0" />
-    <PackageReference Include="xunit" Version="2.9.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+	  <Compile Remove="Benchmark\**" />
+	  <EmbeddedResource Remove="Benchmark\**" />
+	  <None Remove="Benchmark\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+		<PackageReference Include="Microsoft.TestPlatform.TestHost" Version="17.12.0" />
+		<PackageReference Include="xunit" Version="2.9.2" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
 </Project>

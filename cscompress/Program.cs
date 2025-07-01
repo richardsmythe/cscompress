@@ -1,20 +1,12 @@
-﻿using BenchmarkDotNet.Running;
-using FloatingPointCompressor;
-using FloatingPointCompressor.Compressors;
-using FloatingPointCompressor.Models;
-using FloatingPointCompressor.Test;
+﻿using FloatingPointCompressor.Models;
 using FloatingPointCompressor.Utils;
-using System.Globalization;
-using System.IO;
 
 internal class Program
 {
     private static async Task Main(string[] args)
     {
-
-
         double[] scientificDoubleValues = new double[] {
-            5.54500008,
+            5.545000086,
             -7.55112505,
             123456.789,
             -98765.4297,
@@ -22,9 +14,8 @@ internal class Program
             -2.71828175,
             1.61803389,
             -0.577215672,
-            299792.469
+            299792.4695
         };
-
 
         Precision precision = Precision.Thousandsth;
         var compressed = scientificDoubleValues.CompressWithPrecision(precision);
@@ -52,7 +43,7 @@ internal class Program
             double error = Math.Abs(original - recon);
             bool within = error <= tolerance + 1e-12;
             if (!within) allWithinTolerance = false;
-            Console.WriteLine($"Index {i}: |orig - decomp| = {error:G17} {(within ? "(OK)" : "(EXCEEDS TOLERANCE!)")}");
+            Console.WriteLine($"Index {i}: = {error:G17} {(within ? "(OK)" : "(EXCEEDS TOLERANCE!)")}");
         }
         Console.WriteLine(allWithinTolerance ? "\nAll values are within the specified tolerance." : "\nSome values exceed the specified tolerance!");
     }
