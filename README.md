@@ -108,3 +108,6 @@ var decompressed = compressed.DecompressDoubleWithPrecision(values.Length, preci
 Console.WriteLine("\nOriginal values:    " + string.Join(", ", values.Select(v => v.ToString("G17"))));
 Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
 </pre>
+
+## Installation
+CsCompress is available via  <a href='https://www.nuget.org/packages/cscompress'>Nuget</a>
