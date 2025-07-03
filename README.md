@@ -16,7 +16,7 @@ This is a utility for .Net to allow compressing and decompressing arrays of floa
 
 ## Quick Start
 
-### Standard Usageusing FloatingPointCompressor;
+### Standard Usage Using FloatingPointCompressor
 <pre>
 using FloatingPointCompressor.Models;
 
