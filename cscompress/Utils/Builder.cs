@@ -29,21 +29,23 @@ namespace FloatingPointCompressor.Utils
         }
 
         /// <summary>
-        /// Decompresses a byte array to a float array using the original length and precision.
+        /// Decompresses a byte array to a float array using the self-describing payload header.
+        /// The original length and precision are read from the compressed payload.
         /// </summary>
-        public static float[] DecompressFloatWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<float>? strategy = null)
+        public static float[] DecompressFloat(this byte[] compressed, IQuantizationStrategy<float>? strategy = null)
         {
-            var compressor = new CSCompress<float>(new float[originalLength], precision, strategy ?? new IntegerQuantization<float>());
-            return compressor.Decompress(compressed);
+            var strategyInstance = strategy ?? new IntegerQuantization<float>();
+            return strategyInstance.Decompress(compressed);
         }
 
         /// <summary>
-        /// Decompresses a byte array to a double array using the original length and precision.
+        /// Decompresses a byte array to a double array using the self-describing payload header.
+        /// The original length and precision are read from the compressed payload.
         /// </summary>
-        public static double[] DecompressDoubleWithPrecision(this byte[] compressed, int originalLength, Precision precision, IQuantizationStrategy<double>? strategy = null)
+        public static double[] DecompressDouble(this byte[] compressed, IQuantizationStrategy<double>? strategy = null)
         {
-            var compressor = new CSCompress<double>(new double[originalLength], precision, strategy ?? new IntegerQuantization<double>());
-            return compressor.Decompress(compressed);
+            var strategyInstance = strategy ?? new IntegerQuantization<double>();
+            return strategyInstance.Decompress(compressed);
         }
 
         /// <summary>

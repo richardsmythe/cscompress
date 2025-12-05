@@ -28,7 +28,7 @@ internal class Program
         Console.WriteLine(Convert.ToBase64String(compressed));
 
         // Decompress and print decompressed values
-        var decompressed = compressed.DecompressDoubleWithPrecision(scientificDoubleValues.Length, precision);
+        var decompressed = compressed.DecompressDouble();
         Console.WriteLine("\nOriginal values:    " + string.Join(", ", scientificDoubleValues.Select(v => v.ToString("G17"))));
         Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
 

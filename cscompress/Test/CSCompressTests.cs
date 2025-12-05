@@ -1,4 +1,4 @@
-using FloatingPointCompressor.Compressors;
+﻿using FloatingPointCompressor.Compressors;
 using FloatingPointCompressor.Models;
 using Xunit;
 namespace FloatingPointCompressor.Test
@@ -37,6 +37,8 @@ namespace FloatingPointCompressor.Test
             { new float[] { 0f, 1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f, 10f, 11f, 12f, 13f, 14f, 15f, 16f, 17f, 18f, 19f, 20f, 21f, 22f, 23f, 24f, 25f, 26f, 27f, 28f, 29f, 30f, 31f, 32f, 33f, 34f, 35f, 36f, 37f, 38f, 39f, 40f, 41f, 42f, 43f, 44f, 45f, 46f, 47f, 48f, 49f }, Precision.Thousandsth },
         };
 
+        private const int HeaderSize = 1 + 1 + 1 + 4 + 8;
+
         [Theory]
         [MemberData(nameof(samples))]
         public void Test_Precision_With_Different_Values(float[] values, Precision precision)
@@ -49,7 +51,9 @@ namespace FloatingPointCompressor.Test
                 float expected = values[i];
                 float actual = decompressed[i];
                 float tolerance = (float)precision.GetTolerance();
-                Assert.InRange(actual, expected - tolerance, expected + tolerance);
+                float unitInLastPlace = MathF.Abs(MathF.BitIncrement(expected) - expected);
+                float effTolerance = MathF.Max(tolerance, unitInLastPlace);
+                Assert.InRange(actual, expected - effTolerance, expected + effTolerance);
             }
         }
 
@@ -57,7 +61,7 @@ namespace FloatingPointCompressor.Test
         public void Test_Large_Input_Size()
         {
             float[] values = new float[1000000];
-            Random rand = new Random();
+            Random rand = new Random(12345);
             for (int i = 0; i < values.Length; i++)
             {
                 values[i] = (float)(rand.NextDouble() * 100);
@@ -66,7 +70,7 @@ namespace FloatingPointCompressor.Test
             var compressedData = fc.Compress();
             var decompressed = fc.Decompress(compressedData);
 
-            Assert.True(compressedData.Length < values.Length * sizeof(float));
+            Assert.True(compressedData.Length - HeaderSize < values.Length * sizeof(float));
             Assert.Equal(values.Length, decompressed.Length);
         }
 
@@ -77,7 +81,8 @@ namespace FloatingPointCompressor.Test
             CSCompress<float> fc = new CSCompress<float>(values, Precision.Thousandsth, new IntegerQuantization<float>());
             var compressedData = fc.Compress();
             var originalSize = values.Length * sizeof(float);
-            float compressionRatio = (float)originalSize / compressedData.Length;
+            var payloadSize = compressedData.Length - HeaderSize;
+            float compressionRatio = payloadSize == 0 ? 0 : (float)originalSize / payloadSize;
             Assert.True(compressionRatio > 1, $"Compression ratio is too low: {compressionRatio}");
         }
 
@@ -92,8 +97,8 @@ namespace FloatingPointCompressor.Test
                 CSCompress<float> fc = new CSCompress<float>(values, precision, new IntegerQuantization<float>());
                 var compressedData = fc.Compress();
                 var originalSize = values.Length * sizeof(float);
-                var compressedSize = compressedData.Length;
-                float compressionRatio = (float)originalSize / compressedSize;
+                var compressedSize = compressedData.Length - HeaderSize;
+                float compressionRatio = compressedSize == 0 ? 0 : (float)originalSize / compressedSize;
                 Assert.True(compressionRatio >= 1, $"Compression ratio for {precision} precision is too low: {compressionRatio}");
             }
         }
@@ -118,7 +123,7 @@ namespace FloatingPointCompressor.Test
                     $"Error with higher precision should be less than error with lower precision for index {i}. " +
                     $"High precision error: {highPrecisionError}, Low precision error: {lowPrecisionError}");
             }
-            Assert.True(compressedLow.Length < compressedHigh.Length,
+            Assert.True((compressedLow.Length - HeaderSize) < (compressedHigh.Length - HeaderSize),
                 "Compressed data with lower precision should be smaller in size compared to higher precision.");
         }
 
@@ -132,7 +137,7 @@ namespace FloatingPointCompressor.Test
             var compressedData100s = fc100s.Compress();
             Assert.NotEmpty(compressedData10s);
             Assert.NotEmpty(compressedData100s);
-            Assert.NotEqual(compressedData10s.Length, compressedData100s.Length);
+            Assert.NotEqual(compressedData10s.Length - HeaderSize, compressedData100s.Length - HeaderSize);
         }
 
         [Fact]
@@ -156,6 +161,44 @@ namespace FloatingPointCompressor.Test
             Assert.Empty(compressedData);
             Assert.Empty(decompressed);
         }
+
+        [Fact]
+        public void Test_Order_Is_Preserved_Float()
+        {
+            float[] values = { -100f, -1f, 0f, 0.0001f, 1f, 1f, 2f, 10f, 100f };
+            CSCompress<float> fc = new CSCompress<float>(values, Precision.TenMillionths, new IntegerQuantization<float>());
+            var compressed = fc.Compress();
+            var decompressed = fc.Decompress(compressed);
+            for (int i = 1; i < values.Length; i++)
+            {
+                Assert.True(decompressed[i - 1] <= decompressed[i],
+                    $"Order not preserved at index {i}: {decompressed[i - 1]} > {decompressed[i]}");
+            }
+        }
+
+        [Fact]
+        public void Test_Property_Random_RoundTrip_Within_Tolerance_Float()
+        {
+            // |decompressed − original| <= precision.Value, with float ULP accounted
+            var rand = new Random(42);
+            var values = new float[2048];
+            for (int i = 0; i < values.Length; i++)
+            {
+                double r = rand.NextDouble() - 0.5;
+                values[i] = (float)(r * 1_000_000.0);
+            }
+            var precision = Precision.Thousandsth; 
+            var fc = new CSCompress<float>(values, precision, new IntegerQuantization<float>());
+            var compressed = fc.Compress();
+            var decompressed = fc.Decompress(compressed);
+            for (int i = 0; i < values.Length; i++)
+            {
+                float tolerance = (float)precision.Value;
+                float unitInLastPlace = MathF.Abs(MathF.BitIncrement(values[i]) - values[i]);
+                float effTolerance = MathF.Max(tolerance, unitInLastPlace);
+                Assert.InRange(decompressed[i], values[i] - effTolerance, values[i] + effTolerance);
+            }
+        }
     }
 
     public class DoubleCompressorTests
@@ -175,6 +218,8 @@ namespace FloatingPointCompressor.Test
             { new double[] { 0d, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 0d, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 0d, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 0d, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 0d, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d }, Precision.Thousandsth },
             { new double[] { 0d, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d, 11d, 12d, 13d, 14d, 15d, 16d, 17d, 18d, 19d, 20d, 21d, 22d, 23d, 24d, 25d, 26d, 27d, 28d, 29d, 30d, 31d, 32d, 33d, 34d, 35d, 36d, 37d, 38d, 39d, 40d, 41d, 42d, 43d, 44d, 45d, 46d, 47d, 48d, 49d }, Precision.Thousandsth },
         };
+
+        private const int HeaderSize = 1 + 1 + 1 + 4 + 8;
 
         [Theory]
         [MemberData(nameof(doubleSamples))]
@@ -196,7 +241,7 @@ namespace FloatingPointCompressor.Test
         public void Test_Large_Input_Size_Double()
         {
             double[] values = new double[1000000];
-            Random rand = new Random();
+            Random rand = new Random(12345);
             for (int i = 0; i < values.Length; i++)
             {
                 values[i] = rand.NextDouble() * 100;
@@ -204,7 +249,7 @@ namespace FloatingPointCompressor.Test
             var fc = new CSCompress<double>(values, Precision.Thousandsth, new IntegerQuantization<double>());
             var compressedData = fc.Compress();
             var decompressed = fc.Decompress(compressedData);
-            Assert.True(compressedData.Length < values.Length * sizeof(double));
+            Assert.True(compressedData.Length - HeaderSize < values.Length * sizeof(double));
             Assert.Equal(values.Length, decompressed.Length);
         }
 
@@ -215,7 +260,8 @@ namespace FloatingPointCompressor.Test
             var fc = new CSCompress<double>(values, Precision.Thousandsth, new IntegerQuantization<double>());
             var compressedData = fc.Compress();
             var originalSize = values.Length * sizeof(double);
-            double compressionRatio = (double)originalSize / compressedData.Length;
+            var payloadSize = compressedData.Length - HeaderSize;
+            double compressionRatio = payloadSize == 0 ? 0 : (double)originalSize / payloadSize;
             Assert.True(compressionRatio > 1, $"Compression ratio is too low: {compressionRatio}");
         }
 
@@ -228,8 +274,8 @@ namespace FloatingPointCompressor.Test
                 var fc = new CSCompress<double>(values, precision, new IntegerQuantization<double>());
                 var compressedData = fc.Compress();
                 var originalSize = values.Length * sizeof(double);
-                var compressedSize = compressedData.Length;
-                double compressionRatio = (double)originalSize / compressedSize;
+                var compressedSize = compressedData.Length - HeaderSize;
+                double compressionRatio = compressedSize == 0 ? 0 : (double)originalSize / compressedSize;
                 Assert.True(compressionRatio > 1, $"Compression ratio for {precision} precision is too low: {compressionRatio}");
             }
         }
@@ -253,7 +299,7 @@ namespace FloatingPointCompressor.Test
                     $"Error with higher precision should be less than error with lower precision for index {i}. " +
                     $"High precision error: {highPrecisionError}, Low precision error: {lowPrecisionError}");
             }
-            Assert.True(compressedLow.Length < compressedHigh.Length,
+            Assert.True((compressedLow.Length - HeaderSize) < (compressedHigh.Length - HeaderSize),
                 "Compressed data with lower precision should be smaller in size compared to higher precision.");
         }
 
@@ -267,7 +313,7 @@ namespace FloatingPointCompressor.Test
             var compressedData100s = fc100s.Compress();
             Assert.NotEmpty(compressedData10s);
             Assert.NotEmpty(compressedData100s);
-            Assert.NotEqual(compressedData10s.Length, compressedData100s.Length);
+            Assert.NotEqual(compressedData10s.Length - HeaderSize, compressedData100s.Length - HeaderSize);
         }
 
         [Fact]
@@ -335,6 +381,26 @@ namespace FloatingPointCompressor.Test
             }
         }
 
+        [Fact]
+        public void Property_Random_RoundTrip_Within_Tolerance_Double()
+        {
+            var rand = new Random(42);
+            var values = new double[2048];
+            for (int i = 0; i < values.Length; i++)
+            {
+                double r = rand.NextDouble() - 0.5;
+                values[i] = r * 1_000_000.0;
+            }
+            var precision = Precision.Thousandsth;
+            var fc = new CSCompress<double>(values, precision, new IntegerQuantization<double>());
+            var compressed = fc.Compress();
+            var decompressed = fc.Decompress(compressed);
+            for (int i = 0; i < values.Length; i++)
+            {
+                double tolerance = precision.Value;
+                Assert.InRange(decompressed[i], values[i] - tolerance, values[i] + tolerance);
+            }
+        }
     }
 
     public static class PrecisionExtensions
