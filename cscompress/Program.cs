@@ -29,8 +29,8 @@ internal class Program
 
         // Decompress and print decompressed values
         var decompressed = compressed.DecompressDouble();
-        Console.WriteLine("\nOriginal values:    " + string.Join(", ", scientificDoubleValues.Select(v => v.ToString("G17"))));
-        Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("G17"))));
+        Console.WriteLine("\nOriginal values:    " + string.Join(", ", scientificDoubleValues.Select(v => v.ToString("F9"))));
+        Console.WriteLine("Decompressed values:" + string.Join(", ", decompressed.Select(v => v.ToString("F9"))));
 
         // Print error analysis
         double tolerance = precision.Value;

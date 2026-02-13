@@ -125,13 +125,13 @@ namespace FloatingPointCompressor.Compressors
             int bitPosition = 0; // bit offset within the payload (after header)
             var scaleT = T.CreateChecked(scale);
             var scaleVector = Vector<T>.One * scaleT;
+            var scaledArray = new T[Vector<T>.Count];
 
             // SIMD-chunk processing
             for (int i = 0; i + Vector<T>.Count <= values.Length; i += Vector<T>.Count)
             {
                 var vector = new Vector<T>(values, i);
                 var scaledVector = vector * scaleVector;
-                var scaledArray = new T[Vector<T>.Count];
                 scaledVector.CopyTo(scaledArray);
                 for (int j = 0; j < Vector<T>.Count; j++)
                 {
@@ -189,10 +189,10 @@ namespace FloatingPointCompressor.Compressors
             var decompressedValues = new T[header.ValueCount];
             int bitPosition = 0;
             var scaleT = T.CreateChecked(header.Scale);
+            var tmpArr = new T[Vector<T>.Count];
 
             for (int i = 0; i + Vector<T>.Count <= header.ValueCount; i += Vector<T>.Count)
             {
-                var tmpArr = new T[Vector<T>.Count];
                 for (int j = 0; j < Vector<T>.Count; j++)
                 {
                     long scaledValue = UnpackBits(ref bitPosition, compressedData, header.BitsPerValue, PayloadHeader.Size);
@@ -235,10 +235,10 @@ namespace FloatingPointCompressor.Compressors
             var decompressedValues = new T[valueCount];
             int bitPosition = 0;
             var scaleT = T.CreateChecked(header.Scale);
+            var tmpArr = new T[Vector<T>.Count];
 
             for (int i = 0; i + Vector<T>.Count <= valueCount; i += Vector<T>.Count)
             {
-                var tmpArr = new T[Vector<T>.Count];
                 for (int j = 0; j < Vector<T>.Count; j++)
                 {
                     long scaledValue = UnpackBits(ref bitPosition, compressedData, header.BitsPerValue, PayloadHeader.Size);
@@ -266,12 +266,12 @@ namespace FloatingPointCompressor.Compressors
         /// </summary>
         private int CalculateBitsPerValue(T[] values, long scale)
         {
-            T maxAbsValue = values.Length == 0 ? T.Zero : values.Max(v => T.Abs(v));
+            T maxAbsValue = values.Length == 0 ? T.Zero : values.Max(v => T.Abs(v))!;
             double scaled = double.CreateChecked(maxAbsValue) * scale;
             double clamped = Math.Min(Math.Abs(scaled), long.MaxValue);
             long maxScaledValue = (long)Math.Ceiling(clamped);
             int magnitudeBits = (maxScaledValue <= 0) ? 1 : (int)Math.Ceiling(Math.Log2(maxScaledValue + 1));
-            return magnitudeBits + 1; // +1 for sign bit
+            return magnitudeBits + 1;
         }
 
         /// <summary>
